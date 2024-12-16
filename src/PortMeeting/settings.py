@@ -9,8 +9,22 @@ https://docs.djangoproject.com/en/5.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
-
+from datetime import timedelta
 from pathlib import Path
+
+
+import cloudinary
+import cloudinary.uploader
+import cloudinary.api
+
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': 'dqwr1xunf',
+    'API_KEY': '395823314344143',
+    'API_SECRET': 'qQjfVFZh0bcP4mFXUlxVM_nnzcY',
+}
+
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -25,7 +39,7 @@ SECRET_KEY = 'django-insecure-$nad3-ko3f-x8x01f52(lh4i3u!et^w&!mcrfjyorkn-^%)+8a
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -37,9 +51,42 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
+    #install app
+    'base.apps.BaseConfig',
+    'accounts.apps.AccountsConfig',
+    'bookings.apps.BookingsConfig',
+    'rooms.apps.RoomsConfig',
+
+    #install package
+    'corsheaders',
+    'rest_framework',
+    'rest_framework_simplejwt',
+    'drf-yasg',
+    'django_filters',
+]
+CORSE_ORIGIN_ALLOW_ALL = True
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:4200",
+
 ]
 
+
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': True,
+
+    "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
+}
+
+#'ROTATE_REFRESH_TOKENS': True,
+#'BLACKLIST_AFTER_ROTATION': True,
+
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -77,6 +124,14 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
+
+        # 'ENGINE': 'django.db.backends.postgresql',
+        # 'NAME': 'PortMeeting',
+        # 'USER': 'postgres',
+        # 'PASSWORD': 'sql',
+        # 'HOST': 'localhost',
+        # 'PORT': '5432',
+
     }
 }
 
@@ -116,6 +171,8 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
 STATIC_URL = 'static/'
+# Répertoire des médias dans Cloudinary
+MEDIA_URL = '/media/'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
