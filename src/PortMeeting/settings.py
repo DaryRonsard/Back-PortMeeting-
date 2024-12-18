@@ -61,16 +61,20 @@ INSTALLED_APPS = [
     #install package
     'corsheaders',
     'rest_framework',
+    'drf_yasg',
     'rest_framework_simplejwt',
-    'drf-yasg',
     'django_filters',
+    'cloudinary',
+
 ]
+
+
 CORSE_ORIGIN_ALLOW_ALL = True
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:4200",
 
 ]
-
+AUTH_USER_MODEL = 'accounts.UsersModels'
 
 
 SIMPLE_JWT = {
@@ -135,7 +139,7 @@ DATABASES = {
     }
 }
 
-
+APPEND_SLASH = False
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
 
