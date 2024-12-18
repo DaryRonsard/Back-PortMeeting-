@@ -126,8 +126,8 @@ WSGI_APPLICATION = 'PortMeeting.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        # 'ENGINE': 'django.db.backends.sqlite3',
+        # 'NAME': BASE_DIR / 'db.sqlite3',
 
         # 'ENGINE': 'django.db.backends.postgresql',
         # 'NAME': 'PortMeeting',
@@ -135,6 +135,13 @@ DATABASES = {
         # 'PASSWORD': 'sql',
         # 'HOST': 'localhost',
         # 'PORT': '5432',
+
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'portMeeting',
+        'USER': 'walter',
+        'PASSWORD': 'Hr010120018',
+        'HOST': 'localhost',
+        'PORT': '3306',
 
     }
 }

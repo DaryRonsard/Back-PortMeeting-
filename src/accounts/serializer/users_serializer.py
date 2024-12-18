@@ -4,18 +4,17 @@ from accounts.models.user_models import UsersModels
 
 class UserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True, style={'input_type': 'password'})
-    avatar = serializers.ImageField(required=False, allow_null=True)  # Champ pour l'avatar
+    avatar = serializers.ImageField(required=False, allow_null=True)
 
     class Meta:
         model = UsersModels
-        fields = ['id', 'username', 'password', 'email', 'role', 'direction', 'avatar']
+        fields = ['username', 'password', 'email', 'role', 'direction', 'avatar', 'phone_number']
 
     def create(self, validated_data):
-        # Extraire le mot de passe
         password = validated_data.pop('password')
 
-        # Créer l'utilisateur
+
         user = UsersModels(**validated_data)
-        user.set_password(password)  # Hash du mot de passe
+        user.set_password(password)
         user.save()
         return user

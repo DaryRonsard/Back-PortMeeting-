@@ -1,29 +1,59 @@
 from rest_framework import viewsets, status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
+from django.contrib.auth import get_user_model
 from rest_framework.response import Response
+
 
 from accounts.models.user_models import UsersModels
 from accounts.serializer.users_serializer import UserSerializer
+
+
+from rest_framework import status, viewsets
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
 
 
 class UserViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer
     queryset = UsersModels.objects.all()
 
+    def create(self, request, *args, **kwargs):
 
-    @api_view(['POST'])
-    @permission_classes([IsAuthenticated])
-    def create_user(request):
+        user_count = UsersModels.objects.count()
 
-        if request.user.role != 'super_admin':
-            return Response({"detail": "Seuls les super administrateurs peuvent créer des utilisateurs."},
-                            status=status.HTTP_403_FORBIDDEN)
+        if user_count == 0:
 
-        # Traiter la requête si c'est un super administrateur
-        serializer = UserSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response({"message": "Utilisateur créé avec succès.", "data": serializer.data},
-                            status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            data = request.data.copy()
+            data['role'] = 'super_admin'
+            serializer = self.get_serializer(data=data)
+            serializer.is_valid(raise_exception=True)
+            self.perform_create(serializer)
+            headers = self.get_success_headers(serializer.data)
+            return Response(
+                {"message": "Super Administrateur créé avec succès.", "data": serializer.data},
+                status=status.HTTP_201_CREATED,
+                headers=headers,
+            )
+
+
+        if not request.user.is_authenticated or request.user.role != 'super_admin':
+            return Response(
+                {"detail": "Seuls les Super Administrateurs peuvent créer de nouveaux utilisateurs."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(
+            {"message": "Utilisateur créé avec succès.", "data": serializer.data},
+            status=status.HTTP_201_CREATED,
+            headers=headers,
+        )
+
+
+
+

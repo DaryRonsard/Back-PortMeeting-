@@ -1,6 +1,6 @@
 from django.urls import path, include
 from rest_framework import routers
-from django.contrib import admin
+
 
 from accounts.viewset.user_viewset import UserViewSet
 from accounts.viewset.direction_viewset import DirectionViewSet
@@ -16,5 +16,6 @@ router.register(r'directions', DirectionViewSet, basename='directions')
 
 urlpatterns = [
     path('', include(router.urls)),
+    #path('check_if_user_exists/', UserViewSet(), name='check'),
 
 ]
