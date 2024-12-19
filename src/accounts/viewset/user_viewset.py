@@ -36,13 +36,11 @@ class UserViewSet(viewsets.ModelViewSet):
                 headers=headers,
             )
 
-
         if not request.user.is_authenticated or request.user.role != 'super_admin':
             return Response(
                 {"detail": "Seuls les Super Administrateurs peuvent créer de nouveaux utilisateurs."},
                 status=status.HTTP_403_FORBIDDEN,
             )
-
 
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)

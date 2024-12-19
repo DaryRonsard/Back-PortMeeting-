@@ -5,9 +5,7 @@ from rest_framework import routers
 from accounts.viewset.user_viewset import UserViewSet
 from accounts.viewset.direction_viewset import DirectionViewSet
 
-from rest_framework import permissions
-from drf_yasg.views import get_schema_view
-from drf_yasg import openapi
+from accounts.viewset.custom_login_viewset import CustomTokenObtainPairView
 
 
 router = routers.DefaultRouter()
@@ -16,6 +14,7 @@ router.register(r'directions', DirectionViewSet, basename='directions')
 
 urlpatterns = [
     path('', include(router.urls)),
-    #path('check_if_user_exists/', UserViewSet(), name='check'),
+    #path('generate_token/', CustomLoginViewset.as_view(), name='login-and-generate-token'),
+
 
 ]
