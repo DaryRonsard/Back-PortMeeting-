@@ -1,6 +1,6 @@
 from rest_framework import viewsets, status
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.contrib.auth import get_user_model
 from rest_framework.response import Response
 
@@ -17,6 +17,13 @@ from rest_framework.permissions import IsAuthenticated
 class UserViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer
     queryset = UsersModels.objects.all()
+
+    def get_permissions(self):
+        if self.action == 'create':
+            user_count = UsersModels.objects.count()
+            if user_count == 0:
+                return [AllowAny()]
+        return [IsAuthenticated()]
 
     def create(self, request, *args, **kwargs):
 

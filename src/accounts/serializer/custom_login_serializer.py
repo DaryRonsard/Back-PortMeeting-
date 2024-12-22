@@ -12,7 +12,7 @@ class CustomLoginSerializer(TokenObtainPairSerializer):
 
         token['username'] = user.username
         token['role'] = user.role
-        token['direction'] = user.direction
+        token['direction'] = str(user.direction) if hasattr(user, 'direction') else None
         token['email'] = user.email
 
         return token
