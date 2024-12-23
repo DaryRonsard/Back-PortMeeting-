@@ -51,8 +51,8 @@ urlpatterns = [
 
     #urls api
     path('', include('accounts.urls')),
-    path('bookings/', include('bookings.urls')),
-    path('rooms/', include('rooms.urls')),
+    path('api/V1/bookings/', include('bookings.urls')),
+    path('api/V1/rooms/', include('rooms.urls')),
 
 
 
