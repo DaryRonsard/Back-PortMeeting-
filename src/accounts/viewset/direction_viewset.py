@@ -9,7 +9,7 @@ class DirectionViewSet(viewsets.ModelViewSet):
     serializer_class = DirectionSerializer
     queryset = DirectionModels.objects.all()
 
-    # def get_permissions(self):
-    #     return [
-    #         IsAuthenticated()
-    #     ]
+    def get_permissions(self):
+        return [
+            IsAuthenticated()
+        ]

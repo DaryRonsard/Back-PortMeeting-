@@ -8,3 +8,6 @@ from rooms.models.room_models import RoomsModels
 class RoomsViewSet(ModelViewSet):
     serializer_class = RoomsSerializer
     queryset = RoomsModels.objects.all()
+
+    def get_permissions(self):
+        return [IsAuthenticated()]
