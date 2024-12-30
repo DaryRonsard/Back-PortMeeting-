@@ -1,5 +1,4 @@
 from rest_framework import viewsets
-from rest_framework import serializers
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.decorators import action
@@ -29,11 +28,13 @@ class EquipmentViewSet(viewsets.ModelViewSet):
         equipment.save()
 
         return Response(
-            {"message": f"L'équipement {equipment.id} a été désactivé avec succès."},
+            {"message": f"L'équipement {equipment.name} a été désactivé avec succès."},
             status=status.HTTP_200_OK
         )
 
     def get_queryset(self):
+        if self.action == 'reactivate':
+            return EquipementModels.objects.all()
         return EquipementModels.objects.filter(status=True)
 
     @action(detail=True, methods=['post'])
@@ -42,6 +43,6 @@ class EquipmentViewSet(viewsets.ModelViewSet):
         equipment.status = True
         equipment.save()
         return Response(
-            {"message": f"L'équipement {equipment.id} a été réactivé avec succès."},
+            {"message": f"L'équipement {equipment.name}-{equipment.name} a été réactivé avec succès."},
             status=status.HTTP_200_OK
         )
