@@ -12,14 +12,7 @@ class EquipmentViewSet(viewsets.ModelViewSet):
     serializer_class = EquipmentSerializer
     permission_classes = [IsAuthenticated]
 
-    @action(detail=True, methods=['post'])
-    def add_equipment(self, request, pk=None):
-        equipment = self.get_object()
-        serializer = EquipmentSerializer(equipment, data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
     def destroy(self, request, *args, **kwargs):
         equipment = self.get_object()
@@ -28,7 +21,7 @@ class EquipmentViewSet(viewsets.ModelViewSet):
         equipment.save()
 
         return Response(
-            {"message": f"L'équipement {equipment.name} a été désactivé avec succès."},
+            {"message": f"L'équipement {equipment.id}-{equipment.name} a été désactivé avec succès."},
             status=status.HTTP_200_OK
         )
 
@@ -43,6 +36,6 @@ class EquipmentViewSet(viewsets.ModelViewSet):
         equipment.status = True
         equipment.save()
         return Response(
-            {"message": f"L'équipement {equipment.name}-{equipment.name} a été réactivé avec succès."},
+            {"message": f"L'équipement {equipment.id}-{equipment.name} a été réactivé avec succès."},
             status=status.HTTP_200_OK
         )
