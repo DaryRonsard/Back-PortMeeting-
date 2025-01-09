@@ -23,3 +23,5 @@ class BookingRoomsModels(NamedDateTimeModel):
 
     def __str__(self):
         return f"Réservation {self.id} - {self.salle.name} ({self.statut})"
+
+

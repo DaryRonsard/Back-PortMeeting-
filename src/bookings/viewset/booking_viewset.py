@@ -1,0 +1,2 @@
+from bookings.serializer.booking_serializer import BookingRoomSerializer
+from bookings.models.booking_room_models import BookingRoomsModels

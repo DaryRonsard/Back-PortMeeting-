@@ -1,2 +1,3 @@
 from .booking_room_models import BookingRoomsModels
 from .notification_models import NotificationModels
+from .plage_horaire_models import PlageHoraireModels
