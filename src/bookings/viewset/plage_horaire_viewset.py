@@ -14,9 +14,21 @@ class PlageHoraireViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'], url_path='salle/(?P<salle_id>[^/.]+)')
     def get_by_salle(self, request, salle_id=None):
-        plages_horaires = PlageHoraireModels.objects.filter(salle_id=salle_id)
-        serializer = PlageHoraireSerializer(plages_horaires, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        def get_by_salle(self, request, salle_id=None):
+            """
+            Récupère toutes les plages horaires associées à une salle spécifique.
+            """
+            plages_horaires = PlageHoraireModels.objects.filter(salle_id=salle_id)
+
+            # Gérer le cas où aucune plage n'est trouvée
+            if not plages_horaires.exists():
+                return Response(
+                    {"detail": "Aucune plage horaire trouvée pour cette salle."},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+
+            serializer = PlageHoraireSerializer(plages_horaires, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
 
     # def post(self, request):
     #     serializer = PlageHoraireSerializer(data=request.data)

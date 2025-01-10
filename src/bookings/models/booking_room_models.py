@@ -19,9 +19,31 @@ class BookingRoomsModels(NamedDateTimeModel):
     heure_debut = models.TimeField()
     heure_fin = models.TimeField()
     equipements_specifiques = models.ManyToManyField(EquipementModels, blank=True)
-    statut = models.CharField(max_length=20, choices=STATUT_CHOICES, default='en_attente')
+    etat = models.CharField(max_length=20, choices=STATUT_CHOICES, default='en_attente')
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['salle', 'date', 'heure_debut', 'heure_fin'],
+                name='unique_booking_constraint'
+            )
+        ]
+        ordering = ['date', 'heure_debut']
+
+    def save(self, *args, **kwargs):
+
+        conflits = BookingRoomsModels.objects.filter(
+            salle=self.salle,
+            date=self.date,
+            heure_debut__lt=self.heure_fin,
+            heure_fin__gt=self.heure_debut,
+            statut='validee'
+        )
+        if conflits.exists():
+            raise ValueError("La salle est déjà réservée pour cette plage horaire.")
+        super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"Réservation {self.id} - {self.salle.name} ({self.statut})"
+        return f"Réservation {self.id} - Salle : {self.salle.name} - Statut : {self.statut})"
 
 
