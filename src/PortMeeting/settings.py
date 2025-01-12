@@ -159,6 +159,19 @@ DATABASES = {
     }
 }
 
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'ronsardhien@gmail.com'
+EMAIL_HOST_PASSWORD = 'chuj theu iayn yzks'
+
+
+MICROSOFT_CLIENT_ID = "d93aec86-9778-43c2-aac3-caec89341ad7"
+MICROSOFT_TENANT_ID = "common"
+REDIRECT_URI = "http://localhost:8000/api/V1/bookings/consent_callback/"
+
+
 APPEND_SLASH = False
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators

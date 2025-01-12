@@ -2,6 +2,7 @@ from django.db import models
 from accounts.models.user_models import UsersModels
 from rooms.models.room_models import RoomsModels
 from rooms.models.equipment_models import EquipementModels
+#from accounts.models.direction_models import DirectionModels
 from base.models.helpers.named_date_time_model import NamedDateTimeModel
 
 
@@ -15,6 +16,7 @@ class BookingRoomsModels(NamedDateTimeModel):
 
     user = models.ForeignKey(UsersModels, on_delete=models.CASCADE)
     salle = models.ForeignKey(RoomsModels, on_delete=models.CASCADE)
+    #direction = models.ForeignKey(DirectionModels, on_delete=models.CASCADE)
     date = models.DateField()
     heure_debut = models.TimeField()
     heure_fin = models.TimeField()
@@ -37,13 +39,13 @@ class BookingRoomsModels(NamedDateTimeModel):
             date=self.date,
             heure_debut__lt=self.heure_fin,
             heure_fin__gt=self.heure_debut,
-            statut='validee'
+            etat='validee'
         )
         if conflits.exists():
             raise ValueError("La salle est déjà réservée pour cette plage horaire.")
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"Réservation {self.id} - Salle : {self.salle.name} - Statut : {self.statut})"
+        return f"Réservation {self.id} - Salle : {self.salle.name} - etat : {self.etat})"
 
 

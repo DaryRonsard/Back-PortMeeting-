@@ -8,12 +8,17 @@ class BookingRoomSerializer(serializers.ModelSerializer):
         many=True, queryset=EquipementModels.objects.all(), required=False
     )
     class Meta:
-        models = BookingRoomsModels
-        fields = ('salle', 'user', 'date', 'heure_debut', 'heure_fin', 'equipements_specifiques', 'statut')
-
+        model = BookingRoomsModels
+        fields = ('salle', 'user', 'date', 'heure_debut', 'heure_fin', 'equipements_specifiques', 'etat')
 
     def create(self, validated_data):
-        return BookingRoomsModels.objects.create(**validated_data)
+        equipements_specifiques = validated_data.pop('equipements_specifiques', [])
+        booking = BookingRoomsModels.objects.create(**validated_data)
+
+
+        booking.equipements_specifiques.set(equipements_specifiques)
+
+        return booking
 
     def validate(self, data):
         salle = data['salle']
@@ -25,7 +30,7 @@ class BookingRoomSerializer(serializers.ModelSerializer):
         reservations_existantes = BookingRoomsModels.objects.filter(
             salle=salle,
             date=date,
-            statut='validee'
+            etat='validee'
         ).filter(
             heure_debut__lt=heure_fin,
             heure_fin__gt=heure_debut

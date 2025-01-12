@@ -6,12 +6,12 @@ from rooms.models.equipment_models import EquipementModels
 
 
 class RoomsModels(NamedDateTimeModel):
-    direction = models.ForeignKey(DirectionModels, on_delete=models.CASCADE)
+    direction = models.ForeignKey(DirectionModels, on_delete=models.CASCADE, related_name='rooms')
     capacite = models.PositiveIntegerField()
     localisation = models.CharField(max_length=200)
     #image = models.ImageField(upload_to='salles/', blank=True, null=True)
     image = CloudinaryField('salles', blank=True, null=True)
-    equipment = models.ManyToManyField('rooms.EquipementModels', blank=True)
+    equipment = models.ManyToManyField('rooms.EquipementModels', blank=True, related_name='rooms')
 
     def __str__(self):
         return f"{self.name} - {self.direction.name}"

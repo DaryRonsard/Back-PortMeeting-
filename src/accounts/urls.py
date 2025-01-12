@@ -16,5 +16,4 @@ urlpatterns = [
     path('', include(router.urls)),
     #path('generate_token/', CustomLoginViewset.as_view(), name='login-and-generate-token'),
 
-
 ]
