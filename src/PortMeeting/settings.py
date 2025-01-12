@@ -169,6 +169,7 @@ EMAIL_HOST_PASSWORD = 'chuj theu iayn yzks'
 
 MICROSOFT_CLIENT_ID = "d93aec86-9778-43c2-aac3-caec89341ad7"
 MICROSOFT_TENANT_ID = "common"
+MICROSOFT_CLIENT_SECRET = "hvd8Q~pQNvHdf2OzksM9D0HCDtZ.ygARdMJQnc6j"
 REDIRECT_URI = "http://localhost:8000/api/V1/bookings/consent_callback/"
 
 
