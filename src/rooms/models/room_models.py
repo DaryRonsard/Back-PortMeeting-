@@ -10,7 +10,6 @@ class RoomsModels(NamedDateTimeModel):
     capacite = models.PositiveIntegerField()
     localisation = models.CharField(max_length=200)
     #image = models.ImageField(upload_to='salles/', blank=True, null=True)
-    image = CloudinaryField('salles', blank=True, null=True)
     equipment = models.ManyToManyField('rooms.EquipementModels', blank=True, related_name='rooms')
 
     def __str__(self):
