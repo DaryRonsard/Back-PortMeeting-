@@ -5,7 +5,8 @@ from rooms.serializer.equipment_serializer import EquipmentSerializer
 from rooms.serializer.picture_rooms_serializer import PictureRoomSerializer
 
 class RoomsSerializer(serializers.ModelSerializer):
-    images = PictureRoomSerializer(many=True, read_only=True)
+    images = PictureRoomSerializer(many=True, read_only=True, source='picture')
+
     equipment = serializers.PrimaryKeyRelatedField(
         many=True, queryset=EquipementModels.objects.all(), write_only=True
     )
