@@ -1,15 +1,20 @@
 from ..models.booking_room_models import BookingRoomsModels
 from rest_framework import serializers
 from rooms.models.room_models import EquipementModels
-
+from accounts.serializer.users_serializer import UserSerializer
+from rooms.serializer.rooms_serializer import RoomsSerializer
+from accounts.serializer.direction_serializer import DirectionSerializer
 
 class BookingRoomSerializer(serializers.ModelSerializer):
+    direction_details = DirectionSerializer(source='direction', read_only=True)
+    user_details = UserSerializer(source='user', read_only=True)
+    salle_details = RoomsSerializer(source='salle', read_only=True)
     equipements_specifiques = serializers.PrimaryKeyRelatedField(
         many=True, queryset=EquipementModels.objects.all(), required=False
     )
     class Meta:
         model = BookingRoomsModels
-        fields = ('salle', 'user', 'date', 'heure_debut', 'heure_fin', 'equipements_specifiques', 'etat')
+        fields = ('salle', 'user', 'date', 'heure_debut', 'heure_fin', 'equipements_specifiques', 'etat', 'user_details', 'salle_details', 'direction_details')
 
     def create(self, validated_data):
         equipements_specifiques = validated_data.pop('equipements_specifiques', [])

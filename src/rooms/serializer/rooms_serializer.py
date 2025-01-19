@@ -5,6 +5,7 @@ from rooms.serializer.equipment_serializer import EquipmentSerializer
 from rooms.serializer.picture_rooms_serializer import PictureRoomSerializer
 
 class RoomsSerializer(serializers.ModelSerializer):
+    #images = serializers.SerializerMethodField()
     images = PictureRoomSerializer(many=True, read_only=True, source='picture')
 
     equipment = serializers.PrimaryKeyRelatedField(
@@ -21,3 +22,6 @@ class RoomsSerializer(serializers.ModelSerializer):
         room = super().create(validated_data)
         room.equipment.add(*equipment_ids)
         return room
+
+    # def get_images(self, obj):
+    #     return [picture.image.url for picture in obj.picture.all() if picture.image]
