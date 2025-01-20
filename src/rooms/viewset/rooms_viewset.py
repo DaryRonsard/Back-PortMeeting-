@@ -7,6 +7,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rooms.models import EquipementModels
 from rooms.serializer.equipment_serializer import EquipmentSerializer
 from rooms.serializer.rooms_serializer import RoomsSerializer
+from rooms.models.rooms_equipment_models import RoomEquipmentModels
 from rooms.models.room_models import RoomsModels
 from rest_framework.viewsets import ModelViewSet
 
@@ -18,6 +19,7 @@ class RoomsViewSet(viewsets.ModelViewSet):
     queryset = RoomsModels.objects.all()
     permission_classes = [IsAuthenticated]
 
+
     def post(self, request, salle_id):
         try:
             salle = RoomsModels.objects.get(id=salle_id)
@@ -28,15 +30,38 @@ class RoomsViewSet(viewsets.ModelViewSet):
         except RoomsModels.DoesNotExist:
             return Response({"error": "Salle non trouvée"}, status=status.HTTP_404_NOT_FOUND)
 
-
     @action(detail=True, methods=['post'])
     def add_equipment(self, request, pk=None):
-        equipment = self.get_object()
-        serializer = EquipmentSerializer(equipment, data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        room = self.get_object()
+        equipment_id = request.data.get('equipment_id')
+        if not equipment_id:
+            return Response({"error": "ID de l'équipement requis."}, status=status.HTTP_400_BAD_REQUEST)
+
+        equipment = EquipementModels.objects.filter(id=equipment_id).first()
+        if not equipment:
+            return Response({"error": "Équipement non trouvé."}, status=status.HTTP_404_NOT_FOUND)
+
+        RoomEquipmentModels.objects.create(salle=room, equipment=equipment)
+        return Response({"message": "Équipement ajouté avec succès."}, status=status.HTTP_201_CREATED)
+
+    @action(detail=True, methods=['post'])
+    def toggle_equipment(self, request, pk=None):
+        room = self.get_object()
+        equipment_id = request.data.get('equipment_id')
+        if not equipment_id:
+            return Response({"error": "ID de l'équipement requis."}, status=status.HTTP_400_BAD_REQUEST)
+
+        room_equipment = RoomEquipmentModels.objects.filter(salle=room, equipment_id=equipment_id).first()
+        if not room_equipment:
+            return Response({"error": "Association équipement-salle non trouvée."}, status=status.HTTP_404_NOT_FOUND)
+
+        room_equipment.status = not room_equipment.status
+        room_equipment.save()
+        status_message = "activé" if room_equipment.status else "désactivé"
+        return Response(
+            {"message": f"L'équipement a été {status_message} pour cette salle."},
+            status=status.HTTP_200_OK
+        )
 
 
 

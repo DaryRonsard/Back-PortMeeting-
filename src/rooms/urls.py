@@ -13,6 +13,7 @@ router.register(r'equipment', EquipmentViewSet, basename='equipment')
 router.register(r'pictures', PictureRoomsViewset, basename='picture')
 
 
+
 urlpatterns = [
     path('', include(router.urls)),
 ]
