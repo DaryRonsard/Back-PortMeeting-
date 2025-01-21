@@ -1,32 +1,31 @@
-from cloudinary import logger
 from rest_framework import serializers
 
+from accounts.serializer.direction_serializer import DirectionSerializer
 from rooms.models.room_models import RoomsModels
 from rooms.models.equipment_models import EquipementModels
 from rooms.serializer.equipment_serializer import EquipmentSerializer
 from rooms.serializer.picture_rooms_serializer import PictureRoomSerializer
-from rooms.models.picture_rooms_models import PictureRoomModels
-from rooms.serializer.rooms_equipment_serializer import RoomEquipmentSerializer
 
 
 class RoomsSerializer(serializers.ModelSerializer):
-    #images = serializers.SerializerMethodField()
-    room_equipments = RoomEquipmentSerializer(many=True, read_only=True)
     images = PictureRoomSerializer(many=True, read_only=True, source='picture')
-
-    equipment = serializers.PrimaryKeyRelatedField(
-        many=True, queryset=EquipementModels.objects.all(), write_only=True
-    )
-    equipment_details = EquipmentSerializer(many=True, read_only=True, source='equipment')
+    room_equipments = serializers.SerializerMethodField()
+    direction_details = DirectionSerializer(source='direction', read_only=True)
 
     class Meta:
         model = RoomsModels
-        fields = ('id', 'name', 'direction',
-                  'capacite', 'localisation',
-                  'images', 'equipment',
-                  'equipment_details',
-                  'room_equipments'
-                  )
+        fields = (
+            'id', 'name', 'direction', 'capacite',
+            'localisation', 'images', 'room_equipments',
+            'direction_details'
+        )
+
+    def get_room_equipments(self, obj):
+        from rooms.serializer.rooms_equipment_serializer import RoomEquipmentSerializer
+        room_equipments = obj.room_equipments.all()
+        if not room_equipments.exists():
+            return []
+        return RoomEquipmentSerializer(room_equipments, many=True).data
 
     def create(self, validated_data):
         #equipment_ids = validated_data.pop('equipment', [])

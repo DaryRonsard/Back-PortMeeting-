@@ -5,6 +5,7 @@ from rooms.models.equipment_models import EquipementModels
 from rooms.models.room_models import RoomsModels
 
 
+
 class RoomEquipmentModels(NamedDateTimeModel):
     salle = models.ForeignKey(RoomsModels, on_delete=models.CASCADE, related_name='room_equipments')
     equipment = models.ForeignKey(EquipementModels, on_delete=models.CASCADE, related_name='room_equipments')

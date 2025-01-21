@@ -8,6 +8,7 @@ from rooms.models import EquipementModels
 from rooms.serializer.equipment_serializer import EquipmentSerializer
 from rooms.serializer.rooms_serializer import RoomsSerializer
 from rooms.models.rooms_equipment_models import RoomEquipmentModels
+from rooms.serializer.rooms_equipment_serializer import RoomEquipmentSerializer
 from rooms.models.room_models import RoomsModels
 from rest_framework.viewsets import ModelViewSet
 
@@ -29,6 +30,13 @@ class RoomsViewSet(viewsets.ModelViewSet):
             return Response({"message": "Équipements ajoutés avec succès"}, status=status.HTTP_200_OK)
         except RoomsModels.DoesNotExist:
             return Response({"error": "Salle non trouvée"}, status=status.HTTP_404_NOT_FOUND)
+
+    @action(detail=True, methods=['get'], url_path='equipments')
+    def get_equipments(self, request, pk=None):
+        room = self.get_object()
+        room_equipments = RoomEquipmentModels.objects.filter(salle=room)
+        serializer = RoomEquipmentSerializer(room_equipments, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=['post'])
     def add_equipment(self, request, pk=None):
@@ -102,3 +110,11 @@ class RoomsViewSet(viewsets.ModelViewSet):
             {"message": f"La salle {rooms.id}-{rooms.name} a été réactivé avec succès."},
             status=status.HTTP_200_OK
         )
+
+
+    @action(detail=True, methods=['get'], url_path='equipments')
+    def get_equipments(self, request, pk=None):
+        room = self.get_object()
+        room_equipments = RoomEquipmentModels.objects.filter(salle=room)
+        serializer = RoomEquipmentSerializer(room_equipments, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
