@@ -38,19 +38,53 @@ class RoomsViewSet(viewsets.ModelViewSet):
         serializer = RoomEquipmentSerializer(room_equipments, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    @action(detail=True, methods=['post'])
+    # @action(detail=True, methods=['post'])
+    # def add_equipment(self, request, pk=None):
+    #     room = self.get_object()
+    #     equipment_id = request.data.get('equipment_id')
+    #     if not equipment_id:
+    #         return Response({"error": "ID de l'équipement requis."}, status=status.HTTP_400_BAD_REQUEST)
+    #
+    #     equipment = EquipementModels.objects.filter(id=equipment_id).first()
+    #     if not equipment:
+    #         return Response({"error": "Équipement non trouvé."}, status=status.HTTP_404_NOT_FOUND)
+    #
+    #     RoomEquipmentModels.objects.create(salle=room, equipment=equipment)
+    #     return Response({"message": "Équipement ajouté avec succès."}, status=status.HTTP_201_CREATED)
+
+
+    @action(detail=True, methods=['post'], url_path='add-equipment')
     def add_equipment(self, request, pk=None):
         room = self.get_object()
         equipment_id = request.data.get('equipment_id')
         if not equipment_id:
-            return Response({"error": "ID de l'équipement requis."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "ID de l'équipement requis."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         equipment = EquipementModels.objects.filter(id=equipment_id).first()
         if not equipment:
-            return Response({"error": "Équipement non trouvé."}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"error": "Équipement non trouvé."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        existing_association = RoomEquipmentModels.objects.filter(
+            salle=room, equipment=equipment
+        ).exists()
+        if existing_association:
+            return Response(
+                {"error": f"L'équipement '{equipment.name}' est déjà associé à la salle '{room.name}'."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
 
         RoomEquipmentModels.objects.create(salle=room, equipment=equipment)
-        return Response({"message": "Équipement ajouté avec succès."}, status=status.HTTP_201_CREATED)
+        return Response(
+            {"message": f"L'équipement '{equipment.name}' a été ajouté à la salle '{room.name}'."},
+            status=status.HTTP_201_CREATED
+        )
 
     @action(detail=True, methods=['post'])
     def toggle_equipment(self, request, pk=None):

@@ -8,7 +8,7 @@ class RoomEquipmentSerializer(serializers.ModelSerializer):
 
 
     def to_representation(self, instance):
-        from rooms.serializer.rooms_serializer import RoomsSerializer  # Import différé
+        from rooms.serializer.rooms_serializer import RoomsSerializer
         representation = super().to_representation(instance)
         representation['room_details'] = {
             "id": instance.salle.id,
