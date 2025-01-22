@@ -14,7 +14,7 @@ class BookingRoomSerializer(serializers.ModelSerializer):
     )
     class Meta:
         model = BookingRoomsModels
-        fields = ('salle', 'user', 'date', 'heure_debut', 'heure_fin', 'equipements_specifiques', 'etat', 'user_details', 'salle_details', 'direction_details')
+        fields = ('id', 'salle', 'user', 'date', 'heure_debut', 'heure_fin', 'equipements_specifiques', 'etat', 'user_details', 'salle_details', 'direction_details')
 
     def create(self, validated_data):
         equipements_specifiques = validated_data.pop('equipements_specifiques', [])

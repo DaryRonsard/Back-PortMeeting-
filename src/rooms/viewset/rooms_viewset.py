@@ -20,17 +20,6 @@ class RoomsViewSet(viewsets.ModelViewSet):
     queryset = RoomsModels.objects.all()
     permission_classes = [IsAuthenticated]
 
-
-    def post(self, request, salle_id):
-        try:
-            salle = RoomsModels.objects.get(id=salle_id)
-            equipements_ids = request.data.get('equipment', [])
-            equipements = EquipementModels.objects.filter(id__in=equipements_ids)
-            salle.equipements.add(*equipements)
-            return Response({"message": "Équipements ajoutés avec succès"}, status=status.HTTP_200_OK)
-        except RoomsModels.DoesNotExist:
-            return Response({"error": "Salle non trouvée"}, status=status.HTTP_404_NOT_FOUND)
-
     @action(detail=True, methods=['get'], url_path='equipments')
     def get_equipments(self, request, pk=None):
         room = self.get_object()
@@ -38,53 +27,50 @@ class RoomsViewSet(viewsets.ModelViewSet):
         serializer = RoomEquipmentSerializer(room_equipments, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    # @action(detail=True, methods=['post'])
-    # def add_equipment(self, request, pk=None):
-    #     room = self.get_object()
-    #     equipment_id = request.data.get('equipment_id')
-    #     if not equipment_id:
-    #         return Response({"error": "ID de l'équipement requis."}, status=status.HTTP_400_BAD_REQUEST)
-    #
-    #     equipment = EquipementModels.objects.filter(id=equipment_id).first()
-    #     if not equipment:
-    #         return Response({"error": "Équipement non trouvé."}, status=status.HTTP_404_NOT_FOUND)
-    #
-    #     RoomEquipmentModels.objects.create(salle=room, equipment=equipment)
-    #     return Response({"message": "Équipement ajouté avec succès."}, status=status.HTTP_201_CREATED)
 
 
     @action(detail=True, methods=['post'], url_path='add-equipment')
     def add_equipment(self, request, pk=None):
         room = self.get_object()
-        equipment_id = request.data.get('equipment_id')
-        if not equipment_id:
+        equipment_ids = request.data.get('equipements', [])
+
+        if not isinstance(equipment_ids, list) or not equipment_ids:
             return Response(
-                {"error": "ID de l'équipement requis."},
+                {"error": "Une liste valide d'ID d'équipements est requise."},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        equipment = EquipementModels.objects.filter(id=equipment_id).first()
-        if not equipment:
+
+        equipment_queryset = EquipementModels.objects.filter(id__in=equipment_ids)
+        valid_equipment_ids = {eq.id for eq in equipment_queryset}
+        invalid_ids = set(equipment_ids) - valid_equipment_ids
+
+        if invalid_ids:
             return Response(
-                {"error": "Équipement non trouvé."},
+                {"error": f"Les équipements suivants sont introuvables : {list(invalid_ids)}."},
                 status=status.HTTP_404_NOT_FOUND
             )
 
-        existing_association = RoomEquipmentModels.objects.filter(
-            salle=room, equipment=equipment
-        ).exists()
-        if existing_association:
-            return Response(
-                {"error": f"L'équipement '{equipment.name}' est déjà associé à la salle '{room.name}'."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+
+        existing_associations = RoomEquipmentModels.objects.filter(
+            salle=room, equipment_id__in=valid_equipment_ids
+        ).values_list('equipment_id', flat=True)
+
+        already_associated = list(existing_associations)
+        new_associations = valid_equipment_ids - set(already_associated)
 
 
-        RoomEquipmentModels.objects.create(salle=room, equipment=equipment)
-        return Response(
-            {"message": f"L'équipement '{equipment.name}' a été ajouté à la salle '{room.name}'."},
-            status=status.HTTP_201_CREATED
-        )
+        for equipment_id in new_associations:
+            equipment = EquipementModels.objects.get(id=equipment_id)
+            RoomEquipmentModels.objects.create(salle=room, equipment=equipment)
+
+
+        response = {
+            "message": f"Équipements ajoutés avec succès à la salle '{room.name}'.",
+            "déjà_associés": already_associated,
+            "nouvellement_ajoutés": list(new_associations)
+        }
+        return Response(response, status=status.HTTP_201_CREATED)
 
     @action(detail=True, methods=['post'])
     def toggle_equipment(self, request, pk=None):
@@ -105,19 +91,36 @@ class RoomsViewSet(viewsets.ModelViewSet):
             status=status.HTTP_200_OK
         )
 
-
-
     def create(self, request, *args, **kwargs):
         data = request.data
-        equipment_ids = data.get('equipment', [])
+        equipment_ids = data.get('equipements', [])  # Récupérer les ID des équipements
+
+
         salle_serializer = self.get_serializer(data=data)
         if salle_serializer.is_valid():
             salle = salle_serializer.save()
-            if equipment_ids:
-                equipment = EquipementModels.objects.filter(id__in=equipment_ids)
-                salle.equipment.add(*equipment)
+
+            if isinstance(equipment_ids, list) and equipment_ids:
+
+                equipment_queryset = EquipementModels.objects.filter(id__in=equipment_ids)
+                valid_equipment_ids = {eq.id for eq in equipment_queryset}
+                invalid_ids = set(equipment_ids) - valid_equipment_ids
+
+                if invalid_ids:
+                    return Response(
+                        {"error": f"Les équipements suivants sont introuvables : {list(invalid_ids)}."},
+                        status=status.HTTP_404_NOT_FOUND
+                    )
+
+
+                for equipment_id in valid_equipment_ids:
+                    equipment = EquipementModels.objects.get(id=equipment_id)
+                    RoomEquipmentModels.objects.create(salle=salle, equipment=equipment)
+
             return Response(salle_serializer.data, status=status.HTTP_201_CREATED)
+
         return Response(salle_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
     def destroy(self, request, *args, **kwargs):
         rooms = self.get_object()

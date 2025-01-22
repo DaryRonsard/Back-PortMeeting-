@@ -258,9 +258,7 @@ class BookingRoomViewSet(viewsets.ModelViewSet):
 
 
     def creer_evenement_google_calendar(self, reservation):
-        """
-        Crée un événement dans Google Calendar pour une réservation donnée.
-        """
+
         try:
             # Déterminer le chemin absolu vers les credentials
             BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -292,9 +290,7 @@ class BookingRoomViewSet(viewsets.ModelViewSet):
             raise Exception("Une erreur s'est produite lors de la création de l'événement Google Calendar.")
 
     def construire_donnees_evenement(self, reservation):
-        """
-        Valide et construit les données de l'événement pour Google Calendar.
-        """
+
         # Validation des champs critiques
         if not reservation.date or not reservation.heure_debut or not reservation.heure_fin:
             raise ValueError("Les champs date, heure_debut et heure_fin sont obligatoires.")
@@ -329,3 +325,113 @@ class BookingRoomViewSet(viewsets.ModelViewSet):
                 ],
             },
         }
+
+    def envoyer_email_statut_reservation(self, reservation, statut):
+        sujet = f"Mise à jour de votre réservation pour - {reservation.salle.name}"
+        if statut == 'validee':
+            message = (
+                f"Bonjour {reservation.user.username},\n\n"
+                f"Votre réservation pour la salle {reservation.salle.name} a été validée.\n"
+                f"Date : {reservation.date}\n"
+                f"Horaire : {reservation.heure_debut} - {reservation.heure_fin}\n"
+                f"Statut : {statut}\n\n"
+                f"Cordialement,\nL'équipe de gestion des salles."
+            )
+        elif statut == 'rejete':
+            message = (
+                f"Bonjour {reservation.user.username},\n\n"
+                f"Votre réservation pour la salle {reservation.salle.name} a été refusée.\n"
+                f"Date : {reservation.date}\n"
+                f"Horaire : {reservation.heure_debut} - {reservation.heure_fin}\n"
+                f"Statut : {statut}\n\n"
+                f"Cordialement,\nL'équipe de gestion des salles."
+            )
+
+
+        email_type = self.type_email(reservation.user.email)
+        sender_email = "admin@portabidjan.ci"
+
+        if email_type == 'microsoft':
+            try:
+                access_token = self.obtenir_access_token()
+                self.envoyer_email_microsoft(access_token, sujet, message, reservation.user.email, sender_email)
+            except Exception as e:
+                logger.error(f"Erreur lors de l'envoi de l'email via Microsoft Graph : {str(e)}")
+        else:
+            try:
+                send_mail(sujet, message, sender_email, [reservation.user.email])
+            except Exception as e:
+                logger.error(f"Erreur lors de l'envoi de l'email via SMTP : {str(e)}")
+
+
+
+
+    @action(detail=False, methods=['get'], url_path='pending-reservations')
+    def get_pending_reservations(self, request):
+
+        user = request.user
+        if not user.is_authenticated:
+            return Response(
+                {"error": "Utilisateur non authentifié."},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+
+        if not hasattr(user, 'direction') or user.direction is None:
+            return Response(
+                {"error": "L'utilisateur n'est pas associé à une direction."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+            # Récupérer les réservations en attente pour la direction de l'utilisateur
+        pending_reservations = BookingRoomsModels.objects.filter(
+            salle__direction=user.direction, etat='en_attente'
+        )
+        serializer = self.get_serializer(pending_reservations, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['post'], url_path='update-status')
+    def update_status(self, request, pk=None):
+
+        user = request.user
+
+        # Vérification des permissions
+        if not hasattr(user, 'direction'):
+            return Response(
+                {"error": "Accès non autorisé ou utilisateur non associé à une direction."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        # Récupération de la réservation
+        try:
+            reservation = BookingRoomsModels.objects.get(pk=pk)
+        except BookingRoomsModels.DoesNotExist:
+            return Response({"error": "Réservation non trouvée."}, status=status.HTTP_404_NOT_FOUND)
+
+
+        if reservation.salle.direction != user.direction:
+            return Response(
+                {"error": "Vous n'êtes pas autorisé à modifier cette réservation."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+
+        new_status = request.data.get('etat')
+        if new_status not in ['validee', 'rejete']:
+            return Response(
+                {"error": "Statut invalide. Seuls 'validee' et 'rejete' sont autorisés."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+
+        reservation.etat = new_status
+        reservation.save()
+
+        try:
+            self.envoyer_email_statut_reservation(reservation, new_status)
+        except Exception as e:
+            logger.error(f"Erreur lors de l'envoi de l'email de notification : {str(e)}")
+
+        return Response(
+            {"message": f"Réservation mise à jour avec succès à '{new_status}'."},
+            status=status.HTTP_200_OK
+        )
