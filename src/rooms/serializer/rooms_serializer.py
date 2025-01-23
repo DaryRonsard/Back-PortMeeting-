@@ -37,7 +37,7 @@ class RoomsSerializer(serializers.ModelSerializer):
         images_data = validated_data.pop('add_images', [])
         print(f"DEBUG: Images reçues dans validated_data: {images_data}")
 
-        # Vérifier si validated_data contient les bons fichiers
+
         for image_data in images_data:
             print(f"DEBUG: Image_data complet : {image_data}")
             if 'image' not in image_data:
