@@ -1,9 +1,10 @@
 from rest_framework.response import Response
 from rest_framework import status
-
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated, AllowAny
 
+from bookings import models
+from bookings.models import BookingRoomsModels
 from rooms.models import EquipementModels
 from rooms.serializer.equipment_serializer import EquipmentSerializer
 from rooms.serializer.rooms_serializer import RoomsSerializer
@@ -11,6 +12,11 @@ from rooms.models.rooms_equipment_models import RoomEquipmentModels
 from rooms.serializer.rooms_equipment_serializer import RoomEquipmentSerializer
 from rooms.models.room_models import RoomsModels
 from rest_framework.viewsets import ModelViewSet
+from django.db.models import Count
+import openpyxl
+from io import BytesIO
+from reportlab.pdfgen import canvas
+from django.http import HttpResponse
 
 from rest_framework import status, viewsets
 
@@ -153,3 +159,78 @@ class RoomsViewSet(viewsets.ModelViewSet):
         room_equipments = RoomEquipmentModels.objects.filter(salle=room)
         serializer = RoomEquipmentSerializer(room_equipments, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=['get'], url_path='most-used')
+    def get_most_used_rooms(self, request):
+        # Calcul des réservations par salle
+        rooms_stats = (
+            BookingRoomsModels.objects.values('salle__name')
+            .annotate(total_reservations=models.Count('id'))
+            .order_by('-total_reservations')
+        )
+
+        data = [{"room": stat["salle__name"], "reservations": stat["total_reservations"]} for stat in rooms_stats]
+        return Response(data, status=status.HTTP_200_OK)
+
+
+    @action(detail=False, methods=['get'], url_path='most-used/excel')
+    def export_most_used_rooms_excel(self, request):
+        rooms_stats = (
+            BookingRoomsModels.objects.values('salle__name')
+            .annotate(total_reservations=Count('id'))
+            .order_by('-total_reservations')
+        )
+
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "Salles les plus utilisées"
+        ws.append(["Salle", "Nombre de réservations"])
+
+        for stat in rooms_stats:
+            ws.append([stat["salle__name"], stat["total_reservations"]])
+
+        buffer = BytesIO()
+        wb.save(buffer)
+        buffer.seek(0)
+
+        response = HttpResponse(
+            buffer,
+            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )
+        response['Content-Disposition'] = 'attachment; filename="salles_most_used.xlsx"'
+        return response
+
+    from io import BytesIO
+    from reportlab.pdfgen import canvas
+
+    @action(detail=False, methods=['get'], url_path='most-used/pdf')
+    def export_most_used_rooms_pdf(self, request):
+        rooms_stats = (
+            BookingRoomsModels.objects.values('salle__name')
+            .annotate(total_reservations=Count('id'))
+            .order_by('-total_reservations')
+        )
+
+        buffer = BytesIO()
+        p = canvas.Canvas(buffer)
+
+        p.setFont("Helvetica-Bold", 16)
+        p.drawString(200, 800, "Statistiques des salles les plus utilisées")
+        p.setFont("Helvetica", 12)
+
+        y = 750
+        p.drawString(50, y, "Salle")
+        p.drawString(300, y, "Nombre de réservations")
+        y -= 20
+
+        for stat in rooms_stats:
+            p.drawString(50, y, stat["salle__name"])
+            p.drawString(300, y, str(stat["total_reservations"]))
+            y -= 20
+
+        p.save()
+        buffer.seek(0)
+
+        response = HttpResponse(buffer, content_type="application/pdf")
+        response['Content-Disposition'] = 'attachment; filename="salles_most_used.pdf"'
+        return response
