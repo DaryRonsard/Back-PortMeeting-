@@ -7,6 +7,7 @@ from rest_framework.exceptions import ValidationError as DRFValidationError
 class PlageHoraireSerializer(serializers.ModelSerializer):
     class Meta:
         model = PlageHoraireModels
+
         fields = ['id', 'salle', 'heure_debut', 'heure_fin']
 
     def validate(self, attrs):
