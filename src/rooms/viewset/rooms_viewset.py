@@ -1,4 +1,6 @@
 from rest_framework.response import Response
+from django.db.models import Count
+
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated, AllowAny
@@ -12,7 +14,6 @@ from rooms.models.rooms_equipment_models import RoomEquipmentModels
 from rooms.serializer.rooms_equipment_serializer import RoomEquipmentSerializer
 from rooms.models.room_models import RoomsModels
 from rest_framework.viewsets import ModelViewSet
-from django.db.models import Count
 import openpyxl
 from io import BytesIO
 from reportlab.pdfgen import canvas
@@ -162,13 +163,11 @@ class RoomsViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'], url_path='most-used')
     def get_most_used_rooms(self, request):
-        # Calcul des réservations par salle
         rooms_stats = (
             BookingRoomsModels.objects.values('salle__name')
-            .annotate(total_reservations=models.Count('id'))
+            .annotate(total_reservations=Count('id'))
             .order_by('-total_reservations')
         )
-
         data = [{"room": stat["salle__name"], "reservations": stat["total_reservations"]} for stat in rooms_stats]
         return Response(data, status=status.HTTP_200_OK)
 
@@ -200,9 +199,6 @@ class RoomsViewSet(viewsets.ModelViewSet):
         response['Content-Disposition'] = 'attachment; filename="salles_most_used.xlsx"'
         return response
 
-    from io import BytesIO
-    from reportlab.pdfgen import canvas
-
     @action(detail=False, methods=['get'], url_path='most-used/pdf')
     def export_most_used_rooms_pdf(self, request):
         rooms_stats = (
@@ -214,19 +210,30 @@ class RoomsViewSet(viewsets.ModelViewSet):
         buffer = BytesIO()
         p = canvas.Canvas(buffer)
 
+
+        image_path = "C:/Users/hienr/Downloads/paa.png"
+        try:
+            p.drawImage(image_path, 50, 750, width=100, height=100)
+        except Exception as e:
+            print(f"Erreur lors de l'ajout de l'image : {str(e)}")
+
+
         p.setFont("Helvetica-Bold", 16)
         p.drawString(200, 800, "Statistiques des salles les plus utilisées")
-        p.setFont("Helvetica", 12)
 
-        y = 750
+        # Entêtes de colonne
+        p.setFont("Helvetica", 12)
+        y = 720
         p.drawString(50, y, "Salle")
         p.drawString(300, y, "Nombre de réservations")
         y -= 20
+
 
         for stat in rooms_stats:
             p.drawString(50, y, stat["salle__name"])
             p.drawString(300, y, str(stat["total_reservations"]))
             y -= 20
+
 
         p.save()
         buffer.seek(0)
