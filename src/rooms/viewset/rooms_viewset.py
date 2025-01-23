@@ -95,13 +95,12 @@ class RoomsViewSet(viewsets.ModelViewSet):
         data = request.data
         equipment_ids = data.get('equipements', [])  # Récupérer les ID des équipements
 
-
         salle_serializer = self.get_serializer(data=data)
         if salle_serializer.is_valid():
-            salle = salle_serializer.save()
+            salle = salle_serializer.save()  # Le serializer gère la création des équipements et des images
 
+            # Associer les équipements si des IDs ont été fournis
             if isinstance(equipment_ids, list) and equipment_ids:
-
                 equipment_queryset = EquipementModels.objects.filter(id__in=equipment_ids)
                 valid_equipment_ids = {eq.id for eq in equipment_queryset}
                 invalid_ids = set(equipment_ids) - valid_equipment_ids
@@ -111,7 +110,6 @@ class RoomsViewSet(viewsets.ModelViewSet):
                         {"error": f"Les équipements suivants sont introuvables : {list(invalid_ids)}."},
                         status=status.HTTP_404_NOT_FOUND
                     )
-
 
                 for equipment_id in valid_equipment_ids:
                     equipment = EquipementModels.objects.get(id=equipment_id)

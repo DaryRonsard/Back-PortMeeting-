@@ -368,52 +368,57 @@ class BookingRoomViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'], url_path='pending-reservations')
     def get_pending_reservations(self, request):
-
         user = request.user
+
         if not user.is_authenticated:
             return Response(
                 {"error": "Utilisateur non authentifié."},
                 status=status.HTTP_401_UNAUTHORIZED
             )
 
-        if not hasattr(user, 'direction') or user.direction is None:
-            return Response(
-                {"error": "L'utilisateur n'est pas associé à une direction."},
-                status=status.HTTP_403_FORBIDDEN
+        if user.role == 'super_admin':
+            pending_reservations = BookingRoomsModels.objects.filter(etat='en_attente')
+        else:
+
+            if not user.direction:
+                return Response(
+                    {"error": "L'utilisateur n'est pas associé à une direction."},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+
+
+            pending_reservations = BookingRoomsModels.objects.filter(
+                salle__direction=user.direction,
+                etat='en_attente'
             )
 
-            # Récupérer les réservations en attente pour la direction de l'utilisateur
-        pending_reservations = BookingRoomsModels.objects.filter(
-            salle__direction=user.direction, etat='en_attente'
-        )
         serializer = self.get_serializer(pending_reservations, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
 
     @action(detail=True, methods=['post'], url_path='update-status')
     def update_status(self, request, pk=None):
 
         user = request.user
 
-        # Vérification des permissions
-        if not hasattr(user, 'direction'):
+        if not user.is_authenticated:
             return Response(
-                {"error": "Accès non autorisé ou utilisateur non associé à une direction."},
-                status=status.HTTP_403_FORBIDDEN
+                {"error": "Utilisateur non authentifié."},
+                status=status.HTTP_401_UNAUTHORIZED
             )
 
-        # Récupération de la réservation
         try:
             reservation = BookingRoomsModels.objects.get(pk=pk)
         except BookingRoomsModels.DoesNotExist:
             return Response({"error": "Réservation non trouvée."}, status=status.HTTP_404_NOT_FOUND)
 
-
-        if reservation.salle.direction != user.direction:
-            return Response(
-                {"error": "Vous n'êtes pas autorisé à modifier cette réservation."},
-                status=status.HTTP_403_FORBIDDEN
-            )
-
+        if user.role != 'super_admin':
+            if not hasattr(user, 'direction') or reservation.salle.direction != user.direction:
+                return Response(
+                    {"error": "Vous n'êtes pas autorisé à modifier cette réservation."},
+                    status=status.HTTP_403_FORBIDDEN
+                )
 
         new_status = request.data.get('etat')
         if new_status not in ['validee', 'rejete']:
@@ -421,7 +426,6 @@ class BookingRoomViewSet(viewsets.ModelViewSet):
                 {"error": "Statut invalide. Seuls 'validee' et 'rejete' sont autorisés."},
                 status=status.HTTP_400_BAD_REQUEST
             )
-
 
         reservation.etat = new_status
         reservation.save()
