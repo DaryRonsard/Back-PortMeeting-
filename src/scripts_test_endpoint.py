@@ -3,12 +3,12 @@ import requests
 # URL de l'API
 url = "http://127.0.0.1:8000/api/V1/rooms/rooms/"
 
-# En-têtes HTTP avec le token
+
 headers = {
     "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzM3NjQ1MDg2LCJpYXQiOjE3Mzc2MTYyODYsImp0aSI6ImIyNDQyMTVhZGQ0NzQ5ZTZhMjA4YTQxNzIwOTkzMGQ0IiwidXNlcl9pZCI6MiwidXNlcm5hbWUiOiJhZG1pbiIsInJvbGUiOiJzdXBlcl9hZG1pbiIsImRpcmVjdGlvbiI6IkRTSU4iLCJlbWFpbCI6InJvbnNhcmRoaWVuQGdtYWlsLmNvbSJ9.a6Y0z0migKDK3Hz4zDEKVxVwTxjvjrs6UKJwHbRkRfw"
 }
 
-# Données pour la salle
+
 data = {
     "name": "Salle Polyvalente",
     "direction": 7,
