@@ -539,6 +539,8 @@ class BookingRoomViewSet(viewsets.ModelViewSet):
             return BookingRoomsModels.objects.none()
 
         if user.role == 'employe':
-            return BookingRoomsModels.objects.filter(user=user)
+            return BookingRoomsModels.objects.filter(
+                user=user, etat__in=['validee', 'en_attente']
+            )
 
         return BookingRoomsModels.objects.all()
