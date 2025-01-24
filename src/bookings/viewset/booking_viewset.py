@@ -301,7 +301,7 @@ class BookingRoomViewSet(viewsets.ModelViewSet):
         if not reservation.user.email:
             raise ValueError("L'utilisateur doit avoir une adresse email valide.")
 
-        # Construire l'événement
+
         return {
             'summary': f"Réunion : {reservation.salle.name}",
             'location': reservation.salle.localisation or 'Emplacement non spécifié',
@@ -437,5 +437,97 @@ class BookingRoomViewSet(viewsets.ModelViewSet):
 
         return Response(
             {"message": f"Réservation mise à jour avec succès à '{new_status}'."},
+            status=status.HTTP_200_OK
+        )
+
+
+    @action(detail=True, methods=['post'], url_path='cancel-reservation')
+    def cancel_reservation(self, request, pk=None):
+        user = request.user
+
+
+        if not user.is_authenticated:
+            return Response(
+                {"error": "Utilisateur non authentifié."},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+
+
+        try:
+            reservation = BookingRoomsModels.objects.get(pk=pk)
+        except BookingRoomsModels.DoesNotExist:
+            return Response({"error": "Réservation non trouvée."}, status=status.HTTP_404_NOT_FOUND)
+
+
+        if reservation.user != user:
+            return Response(
+                {"error": "Vous n'êtes pas autorisé à annuler cette réservation."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+
+        if reservation.etat not in ['en_attente']:
+            return Response(
+                {"error": f"La réservation ne peut pas être annulée car elle est dans l'état '{reservation.etat}'."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+
+        reservation.etat = 'annulee'
+        reservation.save()
+
+
+        try:
+            self.envoyer_email_statut_reservation(reservation, 'annulee')
+        except Exception as e:
+            logger.error(f"Erreur lors de l'envoi de l'email de notification : {str(e)}")
+
+        return Response(
+            {"message": "Réservation annulée avec succès."},
+            status=status.HTTP_200_OK
+        )
+
+
+    @action(detail=True, methods=['post'], url_path='release')
+    def release_room(self, request, pk=None):
+        user = request.user
+
+        if not user.is_authenticated:
+            return Response(
+                {"error": "Utilisateur non authentifié."},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+
+
+        try:
+            reservation = BookingRoomsModels.objects.get(pk=pk)
+        except BookingRoomsModels.DoesNotExist:
+            return Response({"error": "Réservation non trouvée."}, status=status.HTTP_404_NOT_FOUND)
+
+
+        if reservation.user != user:
+            return Response(
+                {"error": "Vous n'êtes pas autorisé à libérer cette salle."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+
+        if reservation.etat != 'validee':
+            return Response(
+                {
+                    "error": f"La salle ne peut pas être libérée car la réservation est dans l'état '{reservation.etat}'."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+
+        reservation.etat = 'libere'
+        reservation.save()
+
+
+        logger.info(
+            f"La réservation {reservation.id} pour la salle {reservation.salle.name} a été libérée par {user.username}.")
+
+        return Response(
+            {"message": "La salle a été libérée avec succès."},
             status=status.HTTP_200_OK
         )

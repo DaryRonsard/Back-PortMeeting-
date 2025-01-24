@@ -12,6 +12,7 @@ class BookingRoomsModels(NamedDateTimeModel):
         ('validee', 'Validee'),
         ('rejete', 'Rejetee'),
         ('annulee', 'Annulee'),
+        ('libere', 'Libere'),
     ]
 
     user = models.ForeignKey(UsersModels, on_delete=models.CASCADE)
