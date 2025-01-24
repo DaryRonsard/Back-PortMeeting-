@@ -531,3 +531,14 @@ class BookingRoomViewSet(viewsets.ModelViewSet):
             {"message": "La salle a été libérée avec succès."},
             status=status.HTTP_200_OK
         )
+
+    def get_queryset(self):
+        user = self.request.user
+
+        if not user.is_authenticated:
+            return BookingRoomsModels.objects.none()
+
+        if user.role == 'employe':
+            return BookingRoomsModels.objects.filter(user=user)
+
+        return BookingRoomsModels.objects.all()
