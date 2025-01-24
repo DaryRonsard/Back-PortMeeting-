@@ -31,6 +31,7 @@ class BookingRoomSerializer(serializers.ModelSerializer):
         heure_debut = data['heure_debut']
         heure_fin = data['heure_fin']
 
+        reservation_id = self.instance.id if self.instance else None
 
         reservations_existantes = BookingRoomsModels.objects.filter(
             salle=salle,
@@ -39,7 +40,7 @@ class BookingRoomSerializer(serializers.ModelSerializer):
         ).filter(
             heure_debut__lt=heure_fin,
             heure_fin__gt=heure_debut
-        )
+        ).exclude(id=reservation_id)
 
         if reservations_existantes.exists():
             raise serializers.ValidationError(

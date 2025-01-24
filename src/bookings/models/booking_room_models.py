@@ -34,16 +34,18 @@ class BookingRoomsModels(NamedDateTimeModel):
         ordering = ['date', 'heure_debut']
 
     def save(self, *args, **kwargs):
+        if self.etat == 'validee':  # Ne valider les conflits que si l'état est "validee"
+            conflits = BookingRoomsModels.objects.filter(
+                salle=self.salle,
+                date=self.date,
+                heure_debut__lt=self.heure_fin,
+                heure_fin__gt=self.heure_debut,
+                etat='validee'
+            ).exclude(id=self.id)  # Exclure la réservation en cours
 
-        conflits = BookingRoomsModels.objects.filter(
-            salle=self.salle,
-            date=self.date,
-            heure_debut__lt=self.heure_fin,
-            heure_fin__gt=self.heure_debut,
-            etat='validee'
-        )
-        if conflits.exists():
-            raise ValueError("La salle est déjà réservée pour cette plage horaire.")
+            if conflits.exists():
+                raise ValueError("La salle est déjà réservée pour cette plage horaire.")
+
         super().save(*args, **kwargs)
 
     def __str__(self):
