@@ -544,3 +544,65 @@ class BookingRoomViewSet(viewsets.ModelViewSet):
             )
 
         return BookingRoomsModels.objects.all()
+
+
+    @action(detail=False, methods=['get'], url_path='user-history')
+    def user_history(self, request):
+
+        user = request.user
+
+        if not user.is_authenticated:
+            return Response(
+                {"error": "Utilisateur non authentifié."},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+
+        if user.role == 'employe':
+            reservations = BookingRoomsModels.objects.filter(user=user)
+            total_annulees = reservations.filter(etat='annulee').count()
+            total_en_attente = reservations.filter(etat='en_attente').count()
+            total_validees = reservations.filter(etat='validee').count()
+            serializer = self.get_serializer(reservations, many=True)
+            return Response({
+                "historique": serializer.data,
+                "total_annulees": total_annulees,
+                "total_en_attente": total_en_attente,
+                "total_validees": total_validees,
+            }, status=status.HTTP_200_OK)
+
+
+        elif user.role == 'secretaire':
+            reservations = BookingRoomsModels.objects.filter(salle__direction=user.direction)
+            total_annulees = reservations.filter(etat='annulee').count()
+            total_en_attente = reservations.filter(etat='en_attente').count()
+            total_rejetees = reservations.filter(etat='rejete').count()
+            serializer = self.get_serializer(reservations, many=True)
+            return Response({
+                "historique": serializer.data,
+                "total_annulees": total_annulees,
+                "total_en_attente": total_en_attente,
+                "total_rejetees": total_rejetees,
+            }, status=status.HTTP_200_OK)
+
+
+        elif user.role == 'super_admin':
+            reservations = BookingRoomsModels.objects.all()
+            total_annulees = reservations.filter(etat='annulee').count()
+            total_en_attente = reservations.filter(etat='en_attente').count()
+            total_validees = reservations.filter(etat='validee').count()
+            total_rejetees = reservations.filter(etat='rejete').count()
+            serializer = self.get_serializer(reservations, many=True)
+            return Response({
+                "historique": serializer.data,
+                "total_annulees": total_annulees,
+                "total_en_attente": total_en_attente,
+                "total_validees": total_validees,
+                "total_rejetees": total_rejetees,
+            }, status=status.HTTP_200_OK)
+
+        return Response(
+            {"error": "Rôle utilisateur non pris en charge."},
+            status=status.HTTP_403_FORBIDDEN
+        )
+
+
